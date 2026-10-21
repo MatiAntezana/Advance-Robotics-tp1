@@ -1,0 +1,138 @@
+    config = yield
+             ^^^^^
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multic
+all
+    res = hook_impl.function(*args)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/_pytest/config/__init__.py", line 1232, i
+n pytest_cmdline_parse
+    self.parse(args)
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/_pytest/config/__init__.py", line 1583, i
+n parse
+    self.pluginmanager.load_setuptools_entrypoints("pytest11")
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/pluggy/_manager.py", line 417, in load_se
+tuptools_entrypoints
+    self.register(plugin, name=ep.name)
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/_pytest/config/__init__.py", line 571, in
+ register
+    plugin_name = super().register(plugin, name)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/pluggy/_manager.py", line 168, in registe
+r
+    self._verify_hook(hook, hookimpl)
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/pluggy/_manager.py", line 343, in _verify
+_hook
+    raise PluginValidationError(
+pluggy._manager.PluginValidationError: Plugin 'launch_testing' for hook 'pytest_pycollect_makemodule'
+hookimpl definition: pytest_pycollect_makemodule(path, parent)
+Argument(s) {'path'} are declared in the hookimpl but can not be found in the hookspec
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen test
+✨ Pixi task (test): env PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest ros_ws/src/Grupo4/tp1_teach_repeat/test -v
+=================================================================== test session starts ===================================================================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/ros_ws/src/Grupo4/tp1_teach_repeat
+collected 7 items
+
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_se2_and_differential_arc PASSED                                                          [ 14%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_delayed_lidar_keeps_motion_after_measurement PASSED                                      [ 28%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_icp_current_to_reference_and_reject_empty PASSED                                         [ 42%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_closed_loop_polar_convergence[goal0] PASSED                                              [ 57%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_closed_loop_polar_convergence[goal1] PASSED                                              [ 71%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_closed_loop_polar_convergence[goal2] PASSED                                              [ 85%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_atomic_route_roundtrip_and_validation PASSED                                             [100%]
+
+==================================================================== 7 passed in 2.53s ====================================================================
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen build
+✨ Pixi task (build): bash -c 'cd ros_ws && colcon build'
+Starting >>> tp1_teach_repeat
+Finished <<< tp1_teach_repeat [1.29s]
+
+Summary: 1 package finished [1.42s]
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen build
+✨ Pixi task (build): bash -c 'cd ros_ws && colcon build'
+Starting >>> tp1_teach_repeat
+Finished <<< tp1_teach_repeat [1.26s]
+
+Summary: 1 package finished [1.38s]
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen build && pixi run --frozen test
+✨ Pixi task (build): bash -c 'cd ros_ws && colcon build'
+Starting >>> tp1_teach_repeat
+Finished <<< tp1_teach_repeat [1.24s]
+
+Summary: 1 package finished [1.37s]
+✨ Pixi task (test): env PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest ros_ws/src/Grupo4/tp1_teach_repeat/test -v
+=================================================================== test session starts ===================================================================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/ros_ws/src/Grupo4/tp1_teach_repeat
+collected 11 items
+
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_se2_and_differential_arc PASSED                                                          [  9%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_delayed_lidar_keeps_motion_after_measurement PASSED                                      [ 18%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_icp_current_to_reference_and_reject_empty PASSED                                         [ 27%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_closed_loop_polar_convergence[goal0] PASSED                                              [ 36%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_closed_loop_polar_convergence[goal1] PASSED                                              [ 45%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_closed_loop_polar_convergence[goal2] PASSED                                              [ 54%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_atomic_route_roundtrip_and_validation PASSED                                             [ 63%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_nodes.py::test_mixed_late_extrinsic_fills_first_keyframe PASSED                                        [ 72%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_nodes.py::test_repeat_tf_composition_and_measurement_stamp PASSED                                      [ 81%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_nodes.py::test_controller_stale_and_wrong_frame_stop[True] PASSED                                      [ 90%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_nodes.py::test_controller_stale_and_wrong_frame_stop[False] PASSED                                     [100%]
+
+==================================================================== warnings summary =====================================================================
+test/test_nodes.py::test_mixed_late_extrinsic_fills_first_keyframe
+  /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/lark/utils.py:163: DeprecationWarning: module '
+sre_parse' is deprecated
+    import sre_parse
+
+test/test_nodes.py::test_mixed_late_extrinsic_fills_first_keyframe
+  /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/lark/utils.py:164: DeprecationWarning: module '
+sre_constants' is deprecated
+    import sre_constants
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================================================= 11 passed, 2 warnings in 2.36s ==============================================================
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen build && pixi run --frozen test
+✨ Pixi task (build): bash -c 'cd ros_ws && colcon build'
+Starting >>> tp1_teach_repeat
+Finished <<< tp1_teach_repeat [1.50s]
+
+Summary: 1 package finished [1.62s]
+✨ Pixi task (test): env PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest ros_ws/src/Grupo4/tp1_teach_repeat/test -v
+=================================================================== test session starts ===================================================================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/ros_ws/src/Grupo4/tp1_teach_repeat
+collected 11 items
+
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_se2_and_differential_arc PASSED                                                          [  9%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_delayed_lidar_keeps_motion_after_measurement PASSED                                      [ 18%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_icp_current_to_reference_and_reject_empty PASSED                                         [ 27%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_closed_loop_polar_convergence[goal0] PASSED                                              [ 36%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_closed_loop_polar_convergence[goal1] PASSED                                              [ 45%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_closed_loop_polar_convergence[goal2] PASSED                                              [ 54%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_core.py::test_atomic_route_roundtrip_and_validation PASSED                                             [ 63%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_nodes.py::test_mixed_late_extrinsic_fills_first_keyframe PASSED                                        [ 72%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_nodes.py::test_repeat_tf_composition_and_measurement_stamp PASSED                                      [ 81%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_nodes.py::test_controller_stale_and_wrong_frame_stop[True] PASSED                                      [ 90%]
+ros_ws/src/Grupo4/tp1_teach_repeat/test/test_nodes.py::test_controller_stale_and_wrong_frame_stop[False] PASSED                                     [100%]
+
+==================================================================== warnings summary =====================================================================
+test/test_nodes.py::test_mixed_late_extrinsic_fills_first_keyframe
+  /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/lark/utils.py:163: DeprecationWarning: module '
+sre_parse' is deprecated
+    import sre_parse
+
+test/test_nodes.py::test_mixed_late_extrinsic_fills_first_keyframe
+  /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/lark/utils.py:164: DeprecationWarning: module '
+sre_constants' is deprecated
+    import sre_constants
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================================================= 11 passed, 2 warnings in 2.70s ==============================================================
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen python scripts/plot_validation.py validation/gazebo
+/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/trajectories.png
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen build && pixi run --frozen python scripts/plot_validation.py validation/gaze
+bo
+

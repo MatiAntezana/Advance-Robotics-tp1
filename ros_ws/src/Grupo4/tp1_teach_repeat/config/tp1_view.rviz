@@ -1,0 +1,122 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Global Options:
+    Fixed Frame: odom
+    Background Color: 35; 38; 42
+    Frame Rate: 30
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 0.5
+      Plane Cell Count: 30
+    - Class: rviz_default_plugins/RobotModel
+      Name: TurtleBot3
+      Enabled: true
+      Description Source: Topic
+      Description Topic:
+        Value: /robot_description
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+        Depth: 1
+      Alpha: 1
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Names: true
+      Show Axes: true
+      Show Arrows: true
+      Marker Scale: 0.25
+      Frames:
+        All Enabled: true
+    - Class: rviz_default_plugins/LaserScan
+      Name: LiDAR actual
+      Enabled: true
+      Topic:
+        Value: /scan
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        Depth: 5
+      Size (m): 0.025
+      Style: Flat Squares
+      Color Transformer: FlatColor
+      Color: 240; 240; 240
+      Position Transformer: XYZ
+    - Class: rviz_default_plugins/PointCloud2
+      Name: Mapa de referencias
+      Enabled: true
+      Topic:
+        Value: /tnr/reference_map
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+      Color Transformer: FlatColor
+      Color: 100; 130; 150
+      Position Transformer: XYZ
+      Size (m): 0.025
+      Style: Flat Squares
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Keyframes
+      Enabled: true
+      Topic:
+        Value: /tnr/keyframes
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+    - Class: rviz_default_plugins/Path
+      Name: Teach
+      Enabled: true
+      Color: 255; 180; 50
+      Line Style: Lines
+      Line Width: 0.03
+      Buffer Length: 1
+      Topic:
+        Value: /tnr/teach_path
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+    - Class: rviz_default_plugins/Path
+      Name: Repeat
+      Enabled: true
+      Color: 30; 220; 190
+      Line Style: Lines
+      Line Width: 0.03
+      Buffer Length: 1
+      Topic:
+        Value: /tnr/repeat_path
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+    - Class: rviz_default_plugins/Odometry
+      Name: Localización relativa
+      Enabled: true
+      Keep: 1
+      Topic:
+        Value: /rel_odom
+        Reliability Policy: Reliable
+        Depth: 5
+      Covariance:
+        Value: false
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 5
+      Pitch: 1.2
+      Yaw: 3.14
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Target Frame: <Fixed Frame>
+Window Geometry:
+  Width: 1250
+  Height: 800

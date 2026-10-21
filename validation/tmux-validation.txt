@@ -1,0 +1,339 @@
+pixi run --frozen ros2 topic list --no-daemon
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen ros2 topic list --no-daemon
+/parameter_events
+/rosout
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen ros2 topic list --no-daemon --spin-time 5
+pixi run --frozen ros2 topic echo /scan --once --field header
+/clock
+/cmd_vel
+/joint_states
+/parameter_events
+/rel_odom
+/robot_description
+/rosout
+/scan
+/tf
+/tf_static
+/tnr/done
+/tnr/keyframes
+/tnr/odom
+/tnr/reference_map
+/tnr/setpoint
+/tnr/status
+/tnr/teach_path
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen ros2 topic echo /scan --once --field header
+WARNING: topic [/scan] does not appear to be published yet
+Could not determine the type for the passed topic
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen python scripts/validate_gazebo.py --output validation/gazebo
+Traceback (most recent call last):
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/scripts/validate_gazebo.py", line 216, in <module>
+    main()
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/scripts/validate_gazebo.py", line 151, in main
+    node = Probe()
+           ^^^^^^^
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/scripts/validate_gazebo.py", line 56, in __init__
+    self.declare_parameter('use_sim_time', True)
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/rclpy/node.py", line 389, in declare_para
+meter
+    return self.declare_parameters('', [args], ignore_override)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/.pixi/envs/default/lib/python3.12/site-packages/rclpy/node.py", line 524, in declare_para
+meters
+    raise ParameterAlreadyDeclaredException(parameters_already_declared)
+rclpy.exceptions.ParameterAlreadyDeclaredException: Parameter(s) already declared: ['use_sim_time']
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen python scripts/validate_gazebo.py --output validation/gazebo
+Sensores recibidos: 3 scans, 249 joint_states
+
+===== VALIDACIÓN GAZEBO: encoders =====
+$ gz service -s /world/default/set_pose --reqtype gz.msgs.Pose --reptype gz.msgs.Boolean --timeout 5000 --req 'name: "burger" position: {x: -2.0 y: -0.5 z:
+ 0.01} orientation: {w: 1.0}'
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+$ ros2 launch tp1_teach_repeat teach.launch.py mode:=encoders route_file:=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/encod
+ers_route.json overwrite:=true
+[INFO] [launch]: All log files can be found below /Users/matias/.ros/log/2026-10-21-19-21-51-464346-MacBook-Air-de-Matias-4.local-94029
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [localization-1]: process started with pid [94030]
+[localization-1] [INFO] [1792621311.942936000] [tnr_localization]: TEACH modo=encoders, ruta=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/vali
+dation/gazebo/encoders_route.json
+[localization-1] [WARN] [1792621312.516985000] [tnr_localization]: Esperando TF base_link <- base_scan
+[localization-1] [INFO] [1792621313.388881000] [tnr_localization]: Keyframe 0: [0.0, -0.0, -0.0]
+Teleoperación de prueba: 3.0s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621315.617309000] [tnr_localization]: Keyframe 1: [0.221, 0.0, 0.0]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.0s simulados, v=0.0, w=0.35
+[localization-1] [INFO] [1792621318.737943000] [tnr_localization]: Keyframe 2: [0.358, 0.0, 0.296]
+[localization-1] [INFO] [1792621319.547780000] [tnr_localization]: Keyframe 3: [0.358, 0.0, 0.576]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.5s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621322.827829000] [tnr_localization]: Keyframe 4: [0.521, 0.137, 0.7]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+[localization-1] [INFO] [1792621324.609357000] [tnr_localization]: Keyframe 5: [0.585, 0.191, 0.7]
+6 keyframes en /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/encoders_route.json
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [localization-1]: process has finished cleanly [pid 94030]
+$ gz service -s /world/default/set_pose --reqtype gz.msgs.Pose --reptype gz.msgs.Boolean --timeout 5000 --req 'name: "burger" position: {x: -2.0 y: -0.5 z:
+ 0.01} orientation: {w: 1.0}'
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+$ ros2 launch tp1_teach_repeat repeat.launch.py mode:=encoders route_file:=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/enco
+ders_route.json overwrite:=true
+[INFO] [launch]: All log files can be found below /Users/matias/.ros/log/2026-10-21-19-22-06-147671-MacBook-Air-de-Matias-4.local-94142
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [localization-1]: process started with pid [94154]
+[INFO] [controller-2]: process started with pid [94155]
+[localization-1] [INFO] [1792621326.728729000] [tnr_localization]: REPEAT modo=encoders, ruta=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/val
+idation/gazebo/encoders_route.json
+[localization-1] [WARN] [1792621327.615394000] [tnr_localization]: Esperando TF base_link <- base_scan
+[localization-1] [INFO] [1792621329.438988000] [tnr_localization]: Referencia activa 1; destino 2
+[localization-1] [INFO] [1792621332.425229000] [tnr_localization]: Referencia activa 2; destino 3
+[localization-1] [INFO] [1792621333.597371000] [tnr_localization]: Referencia activa 3; destino 4
+[localization-1] [INFO] [1792621335.856946000] [tnr_localization]: Referencia activa 4; destino 5
+[localization-1] [INFO] [1792621337.254082000] [tnr_localization]: REPEAT COMPLETADO
+RESULTADO: {"mode": "encoders", "keyframes": 6, "completed": true, "final_position_error_m": 0.035176531173385865, "final_yaw_error_rad": 0.003303918020659
+2134, "tf_parents": {"wheel_left_link": ["base_link"], "wheel_right_link": ["base_link"], "reference": ["odom"], "base_link": ["reference"], "map_current_k
+eyframe": ["base_link"], "map_next_keyframe": ["map_current_keyframe"], "setpoint": ["base_link"]}, "tf_regressions": []}
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [localization-1]: process has finished cleanly [pid 94154]
+[INFO] [controller-2]: process has finished cleanly [pid 94155]
+Teleoperación de prueba: 0.5s simulados, v=0.0, w=0.0
+
+===== VALIDACIÓN GAZEBO: lidar =====
+$ gz service -s /world/default/set_pose --reqtype gz.msgs.Pose --reptype gz.msgs.Boolean --timeout 5000 --req 'name: "burger" position: {x: -2.0 y: -0.5 z:
+ 0.01} orientation: {w: 1.0}'
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+$ ros2 launch tp1_teach_repeat teach.launch.py mode:=lidar route_file:=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/lidar_ro
+ute.json overwrite:=true
+[INFO] [launch]: All log files can be found below /Users/matias/.ros/log/2026-10-21-19-22-19-419187-MacBook-Air-de-Matias-4.local-94261
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [localization-1]: process started with pid [94274]
+[localization-1] [INFO] [1792621341.066940000] [tnr_localization]: TEACH modo=lidar, ruta=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validat
+ion/gazebo/lidar_route.json
+[localization-1] [INFO] [1792621342.567065000] [tnr_localization]: Keyframe 0: [0.0, 0.0, 0.0]
+Teleoperación de prueba: 3.0s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621344.811154000] [tnr_localization]: Keyframe 1: [0.22, 0.033, -0.039]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.0s simulados, v=0.0, w=0.35
+[localization-1] [INFO] [1792621347.660969000] [tnr_localization]: Keyframe 2: [0.306, 0.046, 0.258]
+[localization-1] [INFO] [1792621348.481627000] [tnr_localization]: Keyframe 3: [0.301, 0.047, 0.538]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.5s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621352.133315000] [tnr_localization]: Keyframe 4: [0.488, 0.158, 0.717]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+[localization-1] [INFO] [1792621353.407205000] [tnr_localization]: Keyframe 5: [0.503, 0.176, 0.716]
+6 keyframes en /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/lidar_route.json
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [localization-1]: process has finished cleanly [pid 94274]
+$ gz service -s /world/default/set_pose --reqtype gz.msgs.Pose --reptype gz.msgs.Boolean --timeout 5000 --req 'name: "burger" position: {x: -2.0 y: -0.5 z:
+ 0.01} orientation: {w: 1.0}'
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+$ ros2 launch tp1_teach_repeat repeat.launch.py mode:=lidar route_file:=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/lidar_r
+oute.json overwrite:=true
+[INFO] [launch]: All log files can be found below /Users/matias/.ros/log/2026-10-21-19-22-35-203807-MacBook-Air-de-Matias-4.local-94401
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [localization-1]: process started with pid [94402]
+[INFO] [controller-2]: process started with pid [94403]
+[localization-1] [INFO] [1792621357.039129000] [tnr_localization]: REPEAT modo=lidar, ruta=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/valida
+tion/gazebo/lidar_route.json
+[localization-1] [INFO] [1792621360.075373000] [tnr_localization]: Referencia activa 1; destino 2
+[localization-1] [INFO] [1792621363.335868000] [tnr_localization]: Referencia activa 2; destino 3
+[localization-1] [INFO] [1792621370.017157000] [tnr_localization]: Referencia activa 3; destino 4
+[localization-1] [INFO] [1792621372.922845000] [tnr_localization]: Referencia activa 4; destino 5
+[localization-1] [INFO] [1792621375.348780000] [tnr_localization]: REPEAT COMPLETADO
+RESULTADO: {"mode": "lidar", "keyframes": 6, "completed": true, "final_position_error_m": 0.02446804583487943, "final_yaw_error_rad": 0.05376708760634075,
+"tf_parents": {"wheel_left_link": ["base_link"], "wheel_right_link": ["base_link"], "reference": ["odom"], "base_link": ["reference"], "map_current_keyfram
+e": ["base_link"], "map_next_keyframe": ["map_current_keyframe"], "setpoint": ["base_link"]}, "tf_regressions": []}
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [controller-2]: process has finished cleanly [pid 94403]
+[INFO] [localization-1]: process has finished cleanly [pid 94402]
+Teleoperación de prueba: 0.5s simulados, v=0.0, w=0.0
+
+===== VALIDACIÓN GAZEBO: mixed =====
+$ gz service -s /world/default/set_pose --reqtype gz.msgs.Pose --reptype gz.msgs.Boolean --timeout 5000 --req 'name: "burger" position: {x: -2.0 y: -0.5 z:
+ 0.01} orientation: {w: 1.0}'
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+$ ros2 launch tp1_teach_repeat teach.launch.py mode:=mixed route_file:=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/mixed_ro
+ute.json overwrite:=true
+[INFO] [launch]: All log files can be found below /Users/matias/.ros/log/2026-10-21-19-22-57-501673-MacBook-Air-de-Matias-4.local-94576
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [localization-1]: process started with pid [94577]
+[localization-1] [INFO] [1792621379.122111000] [tnr_localization]: TEACH modo=mixed, ruta=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validat
+ion/gazebo/mixed_route.json
+[localization-1] [WARN] [1792621379.298096000] [tnr_localization]: Esperando TF base_link <- base_scan
+[localization-1] [INFO] [1792621379.932474000] [tnr_localization]: Keyframe 0: [-0.0, -0.0, 0.0]
+Teleoperación de prueba: 3.0s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621382.175134000] [tnr_localization]: Keyframe 1: [0.215, 0.003, -0.013]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.0s simulados, v=0.0, w=0.35
+[localization-1] [INFO] [1792621385.062644000] [tnr_localization]: Keyframe 2: [0.326, 0.01, 0.253]
+[localization-1] [INFO] [1792621385.866096000] [tnr_localization]: Keyframe 3: [0.324, 0.009, 0.534]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.5s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621389.784205000] [tnr_localization]: Keyframe 4: [0.492, 0.131, 0.713]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+[localization-1] [INFO] [1792621391.288163000] [tnr_localization]: Keyframe 5: [0.533, 0.159, 0.72]
+6 keyframes en /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/mixed_route.json
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [localization-1]: process has finished cleanly [pid 94577]
+Traceback (most recent call last):
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/scripts/validate_gazebo.py", line 216, in <module>
+    main()
+  File "/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/scripts/validate_gazebo.py", line 179, in main
+    assert all(len(k['points']) >= 20 for k in data['keyframes'])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 % pixi run --frozen python scripts/validate_gazebo.py --output validation/gazebo
+Sensores recibidos: 3 scans, 410 joint_states
+
+===== VALIDACIÓN GAZEBO: encoders =====
+$ gz service -s /world/default/set_pose --reqtype gz.msgs.Pose --reptype gz.msgs.Boolean --timeout 5000 --req 'name: "burger" position: {x: -2.0 y: -0.5 z:
+ 0.01} orientation: {w: 1.0}'
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+$ ros2 launch tp1_teach_repeat teach.launch.py mode:=encoders route_file:=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/encod
+ers_route.json overwrite:=true
+[INFO] [launch]: All log files can be found below /Users/matias/.ros/log/2026-10-21-19-26-49-410766-MacBook-Air-de-Matias-4.local-96359
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [localization-1]: process started with pid [96372]
+[localization-1] [INFO] [1792621610.127894000] [tnr_localization]: TEACH modo=encoders, ruta=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/vali
+dation/gazebo/encoders_route.json
+Teleoperación de prueba: 3.0s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621613.155051000] [tnr_localization]: Keyframe 0: [0.006, 0.0, 0.0]
+[localization-1] [INFO] [1792621614.999103000] [tnr_localization]: Keyframe 1: [0.222, 0.0, 0.0]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.0s simulados, v=0.0, w=0.35
+[localization-1] [INFO] [1792621618.356501000] [tnr_localization]: Keyframe 2: [0.355, 0.0, 0.3]
+[localization-1] [INFO] [1792621619.172775000] [tnr_localization]: Keyframe 3: [0.355, 0.0, 0.58]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.5s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621622.420447000] [tnr_localization]: Keyframe 4: [0.512, 0.137, 0.718]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+[localization-1] [INFO] [1792621624.167484000] [tnr_localization]: Keyframe 5: [0.577, 0.194, 0.718]
+6 keyframes en /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/encoders_route.json
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [localization-1]: process has finished cleanly [pid 96372]
+$ gz service -s /world/default/set_pose --reqtype gz.msgs.Pose --reptype gz.msgs.Boolean --timeout 5000 --req 'name: "burger" position: {x: -2.0 y: -0.5 z:
+ 0.01} orientation: {w: 1.0}'
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+$ ros2 launch tp1_teach_repeat repeat.launch.py mode:=encoders route_file:=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/enco
+ders_route.json overwrite:=true
+[INFO] [launch]: All log files can be found below /Users/matias/.ros/log/2026-10-21-19-27-05-683761-MacBook-Air-de-Matias-4.local-96494
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [localization-1]: process started with pid [96495]
+[INFO] [controller-2]: process started with pid [96496]
+[localization-1] [INFO] [1792621626.275400000] [tnr_localization]: REPEAT modo=encoders, ruta=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/val
+idation/gazebo/encoders_route.json
+[localization-1] [WARN] [1792621628.390883000] [tnr_localization]: Esperando TF base_link <- base_scan
+[localization-1] [INFO] [1792621630.548715000] [tnr_localization]: Referencia activa 1; destino 2
+[localization-1] [INFO] [1792621633.328790000] [tnr_localization]: Referencia activa 2; destino 3
+[localization-1] [INFO] [1792621634.486364000] [tnr_localization]: Referencia activa 3; destino 4
+[localization-1] [INFO] [1792621636.746446000] [tnr_localization]: Referencia activa 4; destino 5
+[localization-1] [INFO] [1792621638.145170000] [tnr_localization]: REPEAT COMPLETADO
+RESULTADO: {"mode": "encoders", "keyframes": 6, "completed": true, "final_position_error_m": 0.034216307819666066, "final_yaw_error_rad": 0.004218242972867
+214, "stopped_at_end": true, "tf_parents": {"wheel_left_link": ["base_link"], "wheel_right_link": ["base_link"], "reference": ["odom"], "base_link": ["refe
+rence"], "map_current_keyframe": ["base_link"], "map_next_keyframe": ["map_current_keyframe"], "setpoint": ["base_link"]}, "tf_regressions": []}
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [controller-2]: process has finished cleanly [pid 96496]
+[INFO] [localization-1]: process has finished cleanly [pid 96495]
+Teleoperación de prueba: 0.5s simulados, v=0.0, w=0.0
+
+===== VALIDACIÓN GAZEBO: lidar =====
+$ gz service -s /world/default/set_pose --reqtype gz.msgs.Pose --reptype gz.msgs.Boolean --timeout 5000 --req 'name: "burger" position: {x: -2.0 y: -0.5 z:
+ 0.01} orientation: {w: 1.0}'
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+$ ros2 launch tp1_teach_repeat teach.launch.py mode:=lidar route_file:=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/lidar_ro
+ute.json overwrite:=true
+[INFO] [launch]: All log files can be found below /Users/matias/.ros/log/2026-10-21-19-27-20-195596-MacBook-Air-de-Matias-4.local-96628
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [localization-1]: process started with pid [96629]
+[localization-1] [INFO] [1792621641.716411000] [tnr_localization]: TEACH modo=lidar, ruta=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validat
+ion/gazebo/lidar_route.json
+[localization-1] [INFO] [1792621643.372621000] [tnr_localization]: Keyframe 0: [0.0, 0.0, 0.0]
+Teleoperación de prueba: 3.0s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621646.142053000] [tnr_localization]: Keyframe 1: [0.216, 0.048, -0.05]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.0s simulados, v=0.0, w=0.35
+[localization-1] [INFO] [1792621648.975206000] [tnr_localization]: Keyframe 2: [0.309, 0.073, 0.247]
+[localization-1] [INFO] [1792621649.783014000] [tnr_localization]: Keyframe 3: [0.304, 0.076, 0.526]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.5s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621653.225687000] [tnr_localization]: Keyframe 4: [0.49, 0.149, 0.698]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+[localization-1] [INFO] [1792621654.698713000] [tnr_localization]: Keyframe 5: [0.523, 0.167, 0.707]
+6 keyframes en /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/lidar_route.json
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [localization-1]: process has finished cleanly [pid 96629]
+$ gz service -s /world/default/set_pose --reqtype gz.msgs.Pose --reptype gz.msgs.Boolean --timeout 5000 --req 'name: "burger" position: {x: -2.0 y: -0.5 z:
+ 0.01} orientation: {w: 1.0}'
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+$ ros2 launch tp1_teach_repeat repeat.launch.py mode:=lidar route_file:=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/lidar_r
+oute.json overwrite:=true
+[INFO] [launch]: All log files can be found below /Users/matias/.ros/log/2026-10-21-19-27-36-192564-MacBook-Air-de-Matias-4.local-96763
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [localization-1]: process started with pid [96764]
+[INFO] [controller-2]: process started with pid [96765]
+[localization-1] [INFO] [1792621657.230861000] [tnr_localization]: REPEAT modo=lidar, ruta=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/valida
+tion/gazebo/lidar_route.json
+[localization-1] [WARN] [1792621658.359736000] [tnr_localization]: Esperando TF base_link <- base_scan
+[localization-1] [INFO] [1792621662.579770000] [tnr_localization]: Referencia activa 1; destino 2
+[localization-1] [INFO] [1792621666.029735000] [tnr_localization]: Referencia activa 2; destino 3
+[localization-1] [INFO] [1792621726.822548000] [tnr_localization]: Referencia activa 3; destino 4
+[localization-1] [INFO] [1792621731.606964000] [tnr_localization]: Referencia activa 4; destino 5
+[localization-1] [INFO] [1792621734.256884000] [tnr_localization]: REPEAT COMPLETADO
+RESULTADO: {"mode": "lidar", "keyframes": 6, "completed": true, "final_position_error_m": 0.026318811526340743, "final_yaw_error_rad": 0.05414600826757621,
+ "stopped_at_end": true, "tf_parents": {"wheel_left_link": ["base_link"], "wheel_right_link": ["base_link"], "reference": ["odom"], "base_link": ["referenc
+e"], "map_current_keyframe": ["base_link"], "map_next_keyframe": ["map_current_keyframe"], "setpoint": ["base_link"]}, "tf_regressions": []}
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [controller-2]: process has finished cleanly [pid 96765]
+[INFO] [localization-1]: process has finished cleanly [pid 96764]
+Teleoperación de prueba: 0.5s simulados, v=0.0, w=0.0
+
+===== VALIDACIÓN GAZEBO: mixed =====
+$ gz service -s /world/default/set_pose --reqtype gz.msgs.Pose --reptype gz.msgs.Boolean --timeout 5000 --req 'name: "burger" position: {x: -2.0 y: -0.5 z:
+ 0.01} orientation: {w: 1.0}'
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+$ ros2 launch tp1_teach_repeat teach.launch.py mode:=mixed route_file:=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/mixed_ro
+ute.json overwrite:=true
+[INFO] [launch]: All log files can be found below /Users/matias/.ros/log/2026-10-21-19-28-56-556789-MacBook-Air-de-Matias-4.local-97306
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [localization-1]: process started with pid [97319]
+[localization-1] [INFO] [1792621738.187488000] [tnr_localization]: TEACH modo=mixed, ruta=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validat
+ion/gazebo/mixed_route.json
+[localization-1] [WARN] [1792621739.502387000] [tnr_localization]: Esperando TF base_link <- base_scan
+Teleoperación de prueba: 3.0s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621740.260359000] [tnr_localization]: Keyframe 0: [0.043, 0.0, 0.0]
+[localization-1] [INFO] [1792621742.174955000] [tnr_localization]: Keyframe 1: [0.249, 0.032, -0.037]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.0s simulados, v=0.0, w=0.35
+[localization-1] [INFO] [1792621744.831373000] [tnr_localization]: Keyframe 2: [0.337, 0.043, 0.225]
+[localization-1] [INFO] [1792621745.643828000] [tnr_localization]: Keyframe 3: [0.333, 0.044, 0.505]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+Teleoperación de prueba: 2.5s simulados, v=0.12, w=0.0
+[localization-1] [INFO] [1792621749.362274000] [tnr_localization]: Keyframe 4: [0.507, 0.158, 0.692]
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+[localization-1] [INFO] [1792621750.849767000] [tnr_localization]: Keyframe 5: [0.542, 0.194, 0.689]
+6 keyframes en /Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/mixed_route.json
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [localization-1]: process has finished cleanly [pid 97319]
+$ gz service -s /world/default/set_pose --reqtype gz.msgs.Pose --reptype gz.msgs.Boolean --timeout 5000 --req 'name: "burger" position: {x: -2.0 y: -0.5 z:
+ 0.01} orientation: {w: 1.0}'
+Teleoperación de prueba: 1.0s simulados, v=0.0, w=0.0
+$ ros2 launch tp1_teach_repeat repeat.launch.py mode:=mixed route_file:=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/validation/gazebo/mixed_r
+oute.json overwrite:=true
+[INFO] [launch]: All log files can be found below /Users/matias/.ros/log/2026-10-21-19-29-12-403168-MacBook-Air-de-Matias-4.local-97442
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [localization-1]: process started with pid [97443]
+[INFO] [controller-2]: process started with pid [97444]
+[localization-1] [INFO] [1792621753.758782000] [tnr_localization]: REPEAT modo=mixed, ruta=/Users/matias/5-TO/Robotica-Avanzada/Advance-Robotics-tp1/valida
+tion/gazebo/mixed_route.json
+[localization-1] [WARN] [1792621754.838040000] [tnr_localization]: Esperando TF base_link <- base_scan
+[localization-1] [INFO] [1792621757.460651000] [tnr_localization]: Referencia activa 1; destino 2
+[localization-1] [INFO] [1792621760.600962000] [tnr_localization]: Referencia activa 2; destino 3
+[localization-1] [INFO] [1792621776.936572000] [tnr_localization]: Referencia activa 3; destino 4
+[localization-1] [INFO] [1792621779.167180000] [tnr_localization]: Referencia activa 4; destino 5
+[localization-1] [INFO] [1792621781.093830000] [tnr_localization]: REPEAT COMPLETADO
+RESULTADO: {"mode": "mixed", "keyframes": 6, "completed": true, "final_position_error_m": 0.030492510100353133, "final_yaw_error_rad": 0.0572962301598553,
+"stopped_at_end": true, "tf_parents": {"wheel_left_link": ["base_link"], "wheel_right_link": ["base_link"], "reference": ["odom"], "base_link": ["reference
+"], "map_current_keyframe": ["base_link"], "map_next_keyframe": ["map_current_keyframe"], "setpoint": ["base_link"]}, "tf_regressions": []}
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[INFO] [controller-2]: process has finished cleanly [pid 97444]
+[INFO] [localization-1]: process has finished cleanly [pid 97443]
+Teleoperación de prueba: 0.5s simulados, v=0.0, w=0.0
+(base) matias@MacBook-Air-de-Matias-4 Advance-Robotics-tp1 %
