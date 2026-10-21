@@ -4,8 +4,25 @@ import hashlib
 import os
 from pathlib import Path
 import tempfile
+import signal
+import threading
 
 _simulation_locks = []
+
+
+def spin_until_stopped(node):
+    """No inyectar KeyboardInterrupt dentro de take_message/pybind11 de RoboStack."""
+    import rclpy
+    stopped = threading.Event()
+    previous = {}
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        previous[sig] = signal.signal(sig, lambda *_: stopped.set())
+    try:
+        while rclpy.ok() and not stopped.is_set():
+            rclpy.spin_once(node, timeout_sec=.1)
+    finally:
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
 
 
 def acquire_simulation_lock(path=None):

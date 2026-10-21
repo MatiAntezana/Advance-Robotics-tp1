@@ -20,6 +20,8 @@ launch o configuración: la instalación contiene copias. Open3D 0.19 y NumPy se
 obtienen de Pixi; fuera de este entorno también deben instalarse.
 La tarea `test` desactiva plugins externos de pytest porque el `launch_testing`
 instalado es incompatible con pytest 9. No modifica las dependencias del entorno.
+Las pruebas usan el dominio ROS 43 para no inyectar sus poses de prueba en la
+simulación activa (dominio 0 por defecto).
 
 ## Simulación: Teach
 
@@ -132,6 +134,7 @@ además timeout propio ante terminación abrupta del proceso o pérdida de red.
 | `/cmd_vel` | `geometry_msgs/TwistStamped` por defecto, o `Twist` |
 | `/tnr/teach_path`, `/tnr/repeat_path` | `nav_msgs/Path` |
 | `/tnr/keyframes`, `/tnr/reference_map` | `visualization_msgs/MarkerArray`, `sensor_msgs/PointCloud2` |
+| `/tnr/reference_grid`, `/tnr/reference_walls` | `nav_msgs/OccupancyGrid`, `visualization_msgs/MarkerArray`; mapa derivado para presentación |
 | `/tnr/done`, `/tnr/status` | `std_msgs/Bool`, `std_msgs/String` |
 
 ```text
@@ -150,6 +153,10 @@ al keyframe activo. `reference` es el último keyframe en Teach y el activo en R
 Todos los TF dinámicos usan timestamps de medición, sin adelantarlos. Encoders
 con tiempo repetido/regresivo se descartan. Si se reinicia `/clock`, reiniciar
 Teach/Repeat. Los launch usan `use_sim_time:=true` por defecto.
+Se integran todas las mediciones de encoders, pero TF/odometría se publican hasta
+`publish_rate: 50.0` Hz y las trayectorias hasta 10 Hz para no saturar DDS/RViz
+cuando Gazebo entrega articulaciones a 1 kHz. El punto final se guarda con su
+timestamp de medición más reciente aunque no coincida con el último TF publicado.
 
 El launch propio de simulación evita TF de Gazebo y elimina **en memoria**
 `base_footprint -> base_link` de la descripción original: `base_link` tiene un solo
@@ -157,6 +164,66 @@ padre. No modifica el underlay. No ejecutar el launch original de TurtleBot3 y
 `pixi run sim` simultáneamente.
 RViz muestra modelo, TF, scans, mapa, keyframes y ambas trayectorias; mapa y paths
 usan QoS Transient Local para poder conectar RViz después.
+
+### Lectura de RViz y diagnóstico de alineación
+
+- Vista cenital con fondo oscuro. `Mapa 2D - paredes` muestra celdas de 4 cm
+  con impactos en al menos dos keyframes (uno si solo existe un keyframe).
+  Reduce puntos aislados y densidad visual sin cambiar las poses ni los scans.
+  `map_resolution` ajusta la resolución; la grilla se recalcula al agregar keyframes.
+  `Nube original (diagnostico)` conserva los puntos originales y
+  `Ocupacion (diagnostico)` permite inspeccionar celdas libres, ocupadas y desconocidas.
+  Ambos están desactivados inicialmente. Esta presentación no corrige la deriva
+  histórica ni se utiliza para controlar el robot o para ICP.
+- Teach: naranja, banda de 7.5 cm. Repeat: turquesa, banda de 3.5 cm ligeramente
+  elevada. Si coinciden, se ven el centro turquesa y los bordes naranjas; las
+  coordenadas de los tópicos de trayectoria no se desplazan ni se suavizan.
+- Keyframes: puntos para todas las referencias y etiquetas cada tres keyframes
+  (`keyframe_label_stride`), más inicio, final y referencias seleccionadas.
+  Verde para la referencia activa y magenta
+  para la siguiente. Al terminar se etiqueta el destino `FINAL`, conservando la
+  identificación de la referencia que realmente utiliza TF.
+- Setpoint: flecha y disco magenta en la pose objetivo, línea desde el robot y
+  etiqueta de destino. Display `Setpoint y alineacion`, tópico
+  `/tnr/navigation_markers`. Se actualiza hasta 10 Hz y elimina marcadores de la
+  etapa anterior al cambiar de ruta o de etapa.
+- El texto compacto `ICP` muestra el RMSE de distancias al punto más cercano de la
+  referencia y el porcentaje de puntos dentro de `icp_distance`. Verde indica
+  residual <= 6 cm y solapamiento >= 55%; naranja alerta o indica falta de scans
+  recientes. Esto evalúa consistencia de nubes, **no error real de posición**.
+  `/tnr/alignment` publica los valores, el timestamp del scan y el tipo de referencia
+  como JSON en `std_msgs/String`. P95 incluye también puntos fuera del umbral.
+- TF y la flecha de odometría relativa quedan disponibles como displays opcionales,
+  inicialmente apagados para evitar superponer ejes y flechas sobre el recorrido.
+- `LiDAR localizado` muestra `/tnr/localized_scan` en `odom`, transformado con la
+  estimación real al timestamp del escaneo. En mixto, la TF histórica de ese
+  instante puede contener la predicción anterior a la llegada del ICP; usar esa
+  TF para dibujar el scan crudo producía una separación adicional respecto al mapa.
+  La nube localizada evita esa mezcla temporal sin modificar TF pasadas ni
+  desplazar puntos para forzar una coincidencia. `LiDAR crudo (TF historica)`
+  conserva `/scan` como display opcional rojo para comparar ambas representaciones.
+
+Para reducir la acumulación de deriva en nuevos Teach con LiDAR/mixto, cada scan
+válido se alinea además con un submapa de los últimos tres keyframes, conservados
+como anclas. Las correcciones están limitadas a 20 cm y 0.15 rad por actualización.
+Si el ajuste no es válido se conserva la estimación scan-a-scan. El parámetro
+`teach_submap_keyframes: 0` desactiva esta corrección para comparar. Encoders
+continúa calculando la pose exclusivamente desde las ruedas.
+
+Las nubes de mapas antiguos conservan la deriva con la que se enseñaron: este
+cambio no reescribe rutas ni mueve los scans blancos solo para que coincidan.
+Para evaluar la corrección, enseñar una ruta nueva. Para auditar una existente:
+
+```bash
+pixi run --frozen python scripts/audit_alignment.py routes/mi_ruta_corregida.json \
+  --output validation/rviz_improvements/saved_route_alignment.json
+pixi run --frozen ros2 topic echo /tnr/alignment std_msgs/msg/String
+```
+
+La auditoría compara cada scan con otros keyframes a menos de 0.8 m y reporta
+residual/solapamiento. No puede determinar por sí sola la causa de una separación
+ni sustituye una comparación contra ground truth. Si el solapamiento es bajo,
+un RMSE pequeño de los pocos puntos coincidentes no demuestra buena localización.
 
 ## Parámetros y robot real
 

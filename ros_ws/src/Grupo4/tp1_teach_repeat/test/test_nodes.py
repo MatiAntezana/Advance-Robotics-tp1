@@ -87,6 +87,47 @@ def test_repeat_tf_composition_and_measurement_stamp(tmp_path):
         node.destroy_node()
 
 
+def test_publish_rate_keeps_all_encoder_motion(tmp_path):
+    node = Localization(parameter_overrides=parameters(mode='encoders', route_file=str(tmp_path/'route.json')))
+    try:
+        node.broadcaster.sendTransform = Mock()
+        node.on_joint(joint(1))
+        early = joint(1, .5, .5)
+        early.header.stamp.nanosec = 5_000_000
+        node.on_joint(early)
+        assert node.broadcaster.sendTransform.call_count == 1
+        final = joint(1, 1., 1.)
+        final.header.stamp.nanosec = 20_000_000
+        node.on_joint(final)
+        assert node.broadcaster.sendTransform.call_count == 2
+        assert node.pose[0] == pytest.approx(.033)
+        assert ns(node.last_stamp) == 1_020_000_000
+    finally:
+        node.destroy_node()
+
+
+@pytest.mark.parametrize('anchors,expected_x', [(0, .04), (3, 0.)])
+def test_teach_submap_removes_scan_to_scan_drift(tmp_path, anchors, expected_x):
+    node = Localization(parameter_overrides=parameters(
+        mode='mixed', teach_submap_keyframes=anchors, route_file=str(tmp_path/'route.json')))
+    try:
+        points = np.random.default_rng(7).uniform(-2, 2, (360, 3))
+        points[:, 2] = 0.
+        node.on_joint(joint(1))
+        node.on_joint(joint(3))
+        node.frames = [dict(pose=[0., 0., 0.], points=points.tolist())]
+        node.prev_cloud, node.prev_scan_pose = points, np.array([.04, 0., 0.])
+        node.last_scan_ns = 2*10**9
+        node.cloud = lambda msg: points.copy()
+        scan = LaserScan()
+        scan.header.stamp, scan.header.frame_id = Time(sec=3), 'base_scan'
+        scan.range_min, scan.range_max, scan.ranges = .1, 5., [2.] * 360
+        node.on_scan(scan)
+        assert node.correction[0] == pytest.approx(expected_x, abs=1e-6)
+    finally:
+        node.destroy_node()
+
+
 @pytest.mark.parametrize('stamped', [True, False])
 def test_controller_stale_and_wrong_frame_stop(stamped):
     node = Controller(parameter_overrides=parameters(publish_stamped=stamped))

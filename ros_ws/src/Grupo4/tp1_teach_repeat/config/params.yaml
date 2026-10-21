@@ -13,6 +13,10 @@ tnr_localization:
     min_range: 0.12
     max_range: 5.0
     scan_timeout: 0.8
+    teach_submap_keyframes: 3
+    publish_rate: 50.0
+    map_resolution: 0.04
+    keyframe_label_stride: 3
     position_tolerance: 0.035
     yaw_tolerance: 0.06
 tnr_controller:

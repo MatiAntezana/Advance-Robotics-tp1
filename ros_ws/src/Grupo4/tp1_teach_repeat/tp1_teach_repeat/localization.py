@@ -4,6 +4,7 @@ Mixto: T_odom_base(t) = T_odom_wheel * T_wheel_base(t). Cada ICP
 actualiza T_odom_wheel al tiempo del scan, conservando el avance posterior.
 """
 from collections import deque
+import json
 import math
 from pathlib import Path
 
@@ -14,15 +15,18 @@ from rclpy.qos import QoSProfile, DurabilityPolicy, qos_profile_sensor_data
 from rclpy.time import Time
 from rclpy.signals import SignalHandlerOptions
 from geometry_msgs.msg import PoseStamped, TransformStamped
-from nav_msgs.msg import Odometry, Path as RosPath
+from nav_msgs.msg import Odometry, OccupancyGrid, Path as RosPath
 from sensor_msgs.msg import JointState, LaserScan, PointCloud2, PointField
 from std_msgs.msg import Bool, String
 from std_srvs.srv import Trigger
 from tf2_ros import Buffer, TransformListener, TransformBroadcaster, TransformException
-from visualization_msgs.msg import Marker, MarkerArray
+from visualization_msgs.msg import MarkerArray
 
 from .core import (ICP, between, compose, inverse, interpolate, load_route,
-                   save_route, transform_points, wheel_step, wrap)
+                   save_route, transform_points, wheel_step, wrap, alignment_quality)
+from . import visualization
+from .runtime import spin_until_stopped
+from .mapping import reference_grid
 
 
 def ns(stamp):
@@ -39,6 +43,17 @@ def fill_pose(msg, p):
     return msg
 
 
+def cloud_message(points, stamp):
+    pts = np.asarray(points, dtype='<f4').reshape(-1, 3)
+    cloud = PointCloud2()
+    cloud.header.frame_id, cloud.header.stamp = 'odom', stamp
+    cloud.height, cloud.width, cloud.is_dense = 1, len(pts), True
+    cloud.fields = [PointField(name=name, offset=i*4, datatype=PointField.FLOAT32, count=1)
+                    for i, name in enumerate(('x', 'y', 'z'))]
+    cloud.point_step, cloud.row_step, cloud.data = 12, 12*len(pts), pts.tobytes()
+    return cloud
+
+
 class Localization(Node):
     def __init__(self, **kwargs):
         super().__init__('tnr_localization', **kwargs)
@@ -50,13 +65,14 @@ class Localization(Node):
                         yaw_tolerance=0.06, icp_distance=0.25, icp_fitness=0.55,
                         icp_rmse=0.10, min_range=0.12, max_range=5.0,
                         initial_x=0.0, initial_y=0.0, initial_yaw=0.0,
-                        scan_timeout=0.8)
+                        scan_timeout=0.8, teach_submap_keyframes=3, publish_rate=50.0,
+                        map_resolution=.04, keyframe_label_stride=3)
         self.p = {k: self.declare_parameter(k, v).value for k, v in defaults.items()}
         self.mode, self.stage = self.p['mode'], self.p['stage']
         if self.mode not in ('encoders', 'lidar', 'mixed') or self.stage not in ('teach', 'repeat'):
             raise ValueError('stage: teach/repeat; mode: encoders/lidar/mixed')
         for k in ('wheel_radius', 'wheel_separation', 'keyframe_distance',
-                  'keyframe_angle', 'position_tolerance', 'yaw_tolerance', 'scan_timeout'):
+                  'keyframe_angle', 'position_tolerance', 'yaw_tolerance', 'scan_timeout', 'publish_rate', 'map_resolution'):
             if self.p[k] <= 0:
                 raise ValueError(f'{k} debe ser positivo')
         self.route_file = Path(self.p['route_file']).expanduser().absolute()
@@ -68,6 +84,10 @@ class Localization(Node):
             self.frames = data['keyframes']
             self.teach_trajectory = data.get('trajectory', [])
         self.index, self.done = 0, False
+        self.alignment = None
+        self.last_navigation_ns = -1
+        self.last_visual_state = None
+        self.map_cache_key, self.map_cache = None, None
         self.pose = np.array([self.p['initial_x'], self.p['initial_y'], self.p['initial_yaw']])
         self.wheel = np.zeros(3)
         self.correction = self.pose.copy()
@@ -78,7 +98,9 @@ class Localization(Node):
         self.prev_cloud, self.prev_scan_pose = None, None
         self.pending_scan = None
         self.last_publish_ns = -1
+        self.last_path_publish_ns = -1
         self.last_stamp = None
+        self.measurement_stamp = None
         self.started_ns = None
         self.icp = None if self.mode == 'encoders' else ICP(
             self.p['icp_distance'], self.p['icp_fitness'], self.p['icp_rmse'])
@@ -94,7 +116,12 @@ class Localization(Node):
         self.pub_path = self.create_publisher(RosPath, f'/tnr/{self.stage}_path', latched)
         self.pub_teach = self.create_publisher(RosPath, '/tnr/teach_path', latched) if self.stage == 'repeat' else None
         self.pub_markers = self.create_publisher(MarkerArray, '/tnr/keyframes', latched)
+        self.pub_navigation = self.create_publisher(MarkerArray, '/tnr/navigation_markers', latched)
+        self.pub_alignment = self.create_publisher(String, '/tnr/alignment', latched)
         self.pub_map = self.create_publisher(PointCloud2, '/tnr/reference_map', latched)
+        self.pub_grid = self.create_publisher(OccupancyGrid, '/tnr/reference_grid', latched)
+        self.pub_walls = self.create_publisher(MarkerArray, '/tnr/reference_walls', latched)
+        self.pub_scan = self.create_publisher(PointCloud2, '/tnr/localized_scan', qos_profile_sensor_data)
         self.path = RosPath()
         if self.mode != 'lidar':
             self.create_subscription(JointState, '/joint_states', self.on_joint, qos_profile_sensor_data)
@@ -127,6 +154,7 @@ class Localization(Node):
             dt = (t-self.last_joint[0])*1e-9
             velocity = (self.p['wheel_radius']*sum(delta)/2/dt, step[2]/dt)
         self.last_joint = (t, values)
+        self.measurement_stamp = msg.header.stamp
         self.history.append((t, self.wheel.copy()))
         if self.started_ns is None:
             self.started_ns = t
@@ -180,6 +208,16 @@ class Localization(Node):
                     self.get_logger().warning('ICP rechazado: calidad o movimiento no plausible', throttle_duration_sec=2.)
                     return
                 estimate = compose(self.prev_scan_pose, step)
+            if self.stage == 'teach' and self.p['teach_submap_keyframes'] > 0:
+                # Las anclas fijas evitan sumar el error de cada scan consecutivo.
+                nearby = [f for f in self.frames[-int(self.p['teach_submap_keyframes']):] if len(f['points']) >= 20]
+                if nearby:
+                    submap = np.concatenate([transform_points(f['points'], f['pose']) for f in nearby])
+                    matched = self.icp.align(points, submap, estimate)
+                    if matched is not None:
+                        correction = between(estimate, matched)
+                        if np.linalg.norm(correction[:2]) < .20 and abs(correction[2]) < .15:
+                            estimate = matched
             if self.stage == 'repeat':
                 active = self.frames[self.index]
                 guess = between(active['pose'], estimate)
@@ -197,10 +235,21 @@ class Localization(Node):
                 self.correction = compose(estimate, inverse(wheel_at_scan))
         self.last_scan_ns = t
         self.last_cloud, self.last_scan_pose = points, estimate.copy()
+        # Resultado real de la localización al tiempo del scan. En mixto, la TF
+        # histórica puede contener aún la predicción anterior a recibir este ICP.
+        # Publicar la nube en odom evita dibujar esa predicción como pose corregida.
+        self.pub_scan.publish(cloud_message(transform_points(points, estimate), msg.header.stamp))
         self.raw_scan = dict(stamp_ns=t, frame=msg.header.frame_id,
                              angle_min=msg.angle_min, angle_increment=msg.angle_increment,
                              range_min=msg.range_min, range_max=msg.range_max,
                              ranges=[float(r) if math.isfinite(r) else None for r in msg.ranges])
+        # Medir el escaneo real respecto al ancla; no desplazarlo solo para dibujarlo.
+        anchors = self.frames[-int(max(1, self.p['teach_submap_keyframes'])):] if self.stage == 'teach' else [self.frames[self.index]]
+        targets = [transform_points(f['points'], f['pose']) for f in anchors if len(f['points']) >= 20]
+        if targets:
+            self.alignment = dict(scan_stamp_ns=t, source='teach_submap' if self.stage == 'teach' else 'repeat_keyframe',
+                                  **alignment_quality(points, np.concatenate(targets), estimate, self.p['icp_distance']))
+            self.pub_alignment.publish(String(data=json.dumps(self.alignment)))
         if self.stage == 'teach':
             # DDS puede entregar encoders antes de la extrínseca estática del láser.
             # Completar anclas que nacieron sin scan, expresando esta observación
@@ -219,6 +268,7 @@ class Localization(Node):
             dt = (t-self.last_publish_ns)*1e-9 if self.last_publish_ns >= 0 else 0.
             delta = between(old, estimate)
             self.pose = estimate
+            self.measurement_stamp = msg.header.stamp
             self.publish(estimate, msg.header.stamp,
                          (delta[0]/dt, delta[2]/dt) if dt > 0 else (0., 0.))
         # En mixto publica el próximo encoder, con su timestamp real y corrección aplicada.
@@ -251,7 +301,7 @@ class Localization(Node):
         if self.stage != 'teach' or self.last_stamp is None:
             response.success, response.message = False, 'Teach sin mediciones, o etapa Repeat'
         else:
-            self.record(self.pose, self.last_stamp, force=True)
+            self.record(self.pose, self.measurement_stamp, force=True)
             self.persist()
             response.success, response.message = True, f'{len(self.frames)} keyframes en {self.route_file}'
         return response
@@ -266,6 +316,8 @@ class Localization(Node):
     def publish(self, pose, stamp, velocity):
         t = ns(stamp)
         if t <= self.last_publish_ns:
+            return
+        if self.last_publish_ns >= 0 and t-self.last_publish_ns < 1e9/self.p['publish_rate']:
             return
         self.last_publish_ns, self.last_stamp = t, stamp
         if self.stage == 'repeat':
@@ -308,6 +360,13 @@ class Localization(Node):
             pub.publish(odom)
         self.pub_done.publish(Bool(data=self.done))
         self.pub_status.publish(String(data=f'{self.stage}:{self.mode}:keyframe={self.index}:done={self.done}'))
+        state = (len(self.frames), self.index, self.done)
+        if state != self.last_visual_state:
+            self.last_visual_state = state
+            self.publish_visuals()
+        if t-self.last_navigation_ns >= 100_000_000:
+            self.last_navigation_ns = t
+            self.publish_navigation(pose, stamp)
         if not self.trajectory or np.linalg.norm(between(self.trajectory[-1][1:], pose)) > .01:
             self.trajectory.append([t, *pose.tolist()])
             p = PoseStamped()
@@ -316,33 +375,47 @@ class Localization(Node):
             self.path.poses.append(p)
             self.path.poses = self.path.poses[-10000:]
         self.path.header.frame_id, self.path.header.stamp = 'odom', stamp
-        self.pub_path.publish(self.path)
+        if t-self.last_path_publish_ns >= 100_000_000:
+            self.last_path_publish_ns = t
+            self.pub_path.publish(self.path)
+
+    def publish_navigation(self, pose, stamp):
+        quality = None if self.alignment is None else dict(self.alignment)
+        if quality is not None and self.get_clock().now().nanoseconds-quality['scan_stamp_ns'] > self.p['scan_timeout']*1e9:
+            quality['stale'] = True
+        target_index = min(self.index+1, len(self.frames)-1) if self.frames else 0
+        target_pose = self.frames[target_index]['pose'] if self.stage == 'repeat' else None
+        self.pub_navigation.publish(visualization.navigation(pose, target_pose, target_index,
+                                                             self.done, stamp, quality))
 
     def publish_visuals(self):
         if self.last_stamp is None or not self.frames or not rclpy.ok():
             return
         stamp = self.last_stamp
-        markers, all_points = MarkerArray(), []
-        for i, f in enumerate(self.frames):
-            m = Marker()
-            m.header.frame_id, m.header.stamp = 'odom', stamp
-            m.ns, m.id, m.type, m.action = 'keyframes', i, Marker.ARROW, Marker.ADD
-            fill_pose(m.pose, f['pose'])
-            m.scale.x, m.scale.y, m.scale.z = .15, .035, .035
-            m.color.r, m.color.g, m.color.b, m.color.a = .95, .65, .15, 1.
-            markers.markers.append(m)
+        self.publish_navigation(self.pose, stamp)
+        all_points = []
+        for f in self.frames:
             if len(f['points']):
                 all_points.append(transform_points(f['points'], f['pose']))
-        self.pub_markers.publish(markers)
+        self.pub_markers.publish(visualization.keyframes(self.frames, self.stage, self.index, self.done, stamp,
+                                                       int(self.p['keyframe_label_stride'])))
         if all_points:
-            pts = np.concatenate(all_points).astype('<f4')
-            cloud = PointCloud2()
-            cloud.header.frame_id, cloud.header.stamp = 'odom', stamp
-            cloud.height, cloud.width, cloud.is_dense = 1, len(pts), True
-            cloud.fields = [PointField(name=name, offset=i*4, datatype=PointField.FLOAT32, count=1)
-                            for i, name in enumerate(('x', 'y', 'z'))]
-            cloud.point_step, cloud.row_step, cloud.data = 12, 12*len(pts), pts.tobytes()
-            self.pub_map.publish(cloud)
+            self.pub_map.publish(cloud_message(np.concatenate(all_points), stamp))
+            cache_key = (len(self.frames), sum(len(f['points']) for f in self.frames))
+            if cache_key != self.map_cache_key:
+                self.map_cache = reference_grid(self.frames, self.p['map_resolution'])
+                self.map_cache_key = cache_key
+            if self.map_cache is not None:
+                grid, origin = self.map_cache
+                message = OccupancyGrid()
+                message.header.frame_id, message.header.stamp = 'odom', stamp
+                message.info.resolution = float(self.p['map_resolution'])
+                message.info.height, message.info.width = map(int, grid.shape)
+                message.info.origin.position.x, message.info.origin.position.y = map(float, origin)
+                message.info.origin.orientation.w = 1.
+                message.data = grid.ravel().tolist()
+                self.pub_grid.publish(message)
+                self.pub_walls.publish(visualization.walls(grid, origin, self.p['map_resolution'], stamp))
         if self.pub_teach:
             path = RosPath()
             path.header.frame_id, path.header.stamp = 'odom', stamp
@@ -355,7 +428,7 @@ class Localization(Node):
 
     def finish(self):
         if self.stage == 'teach' and self.last_stamp is not None:
-            self.record(self.pose, self.last_stamp, force=True)
+            self.record(self.pose, self.measurement_stamp, force=True)
             self.persist()
 
 
@@ -364,7 +437,7 @@ def main(args=None):
     node = None
     try:
         node = Localization()
-        rclpy.spin(node)
+        spin_until_stopped(node)
     except KeyboardInterrupt:
         pass
     finally:

@@ -7,7 +7,7 @@ Visualization Manager:
   Class: ""
   Global Options:
     Fixed Frame: odom
-    Background Color: 35; 38; 42
+    Background Color: 24; 29; 35
     Frame Rate: 30
   Displays:
     - Class: rviz_default_plugins/Grid
@@ -15,6 +15,8 @@ Visualization Manager:
       Enabled: true
       Cell Size: 0.5
       Plane Cell Count: 30
+      Alpha: 0.15
+      Color: 100; 110; 120
     - Class: rviz_default_plugins/RobotModel
       Name: TurtleBot3
       Enabled: true
@@ -27,16 +29,30 @@ Visualization Manager:
       Alpha: 1
     - Class: rviz_default_plugins/TF
       Name: TF
-      Enabled: true
+      Enabled: false
       Show Names: true
       Show Axes: true
       Show Arrows: true
       Marker Scale: 0.25
       Frames:
         All Enabled: true
-    - Class: rviz_default_plugins/LaserScan
-      Name: LiDAR actual
+    - Class: rviz_default_plugins/PointCloud2
+      Name: LiDAR localizado
       Enabled: true
+      Topic:
+        Value: /tnr/localized_scan
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        Depth: 5
+      Size (m): 0.015
+      Style: Points
+      Size (Pixels): 2
+      Color Transformer: FlatColor
+      Color: 240; 240; 240
+      Position Transformer: XYZ
+    - Class: rviz_default_plugins/LaserScan
+      Name: LiDAR crudo (TF historica)
+      Enabled: false
       Topic:
         Value: /scan
         Reliability Policy: Best Effort
@@ -45,11 +61,11 @@ Visualization Manager:
       Size (m): 0.025
       Style: Flat Squares
       Color Transformer: FlatColor
-      Color: 240; 240; 240
+      Color: 255; 100; 100
       Position Transformer: XYZ
     - Class: rviz_default_plugins/PointCloud2
-      Name: Mapa de referencias
-      Enabled: true
+      Name: Nube original (diagnostico)
+      Enabled: false
       Topic:
         Value: /tnr/reference_map
         Reliability Policy: Reliable
@@ -61,6 +77,22 @@ Visualization Manager:
       Size (m): 0.025
       Style: Flat Squares
     - Class: rviz_default_plugins/MarkerArray
+      Name: Mapa 2D - paredes
+      Enabled: true
+      Topic:
+        Value: /tnr/reference_walls
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+    - Class: rviz_default_plugins/Map
+      Name: Ocupacion (diagnostico)
+      Enabled: false
+      Topic:
+        Value: /tnr/reference_grid
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+    - Class: rviz_default_plugins/MarkerArray
       Name: Keyframes
       Enabled: true
       Topic:
@@ -71,9 +103,13 @@ Visualization Manager:
     - Class: rviz_default_plugins/Path
       Name: Teach
       Enabled: true
-      Color: 255; 180; 50
-      Line Style: Lines
-      Line Width: 0.03
+      Color: 255; 155; 35
+      Line Style: Billboards
+      Line Width: 0.075
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.015
       Buffer Length: 1
       Topic:
         Value: /tnr/teach_path
@@ -83,18 +119,30 @@ Visualization Manager:
     - Class: rviz_default_plugins/Path
       Name: Repeat
       Enabled: true
-      Color: 30; 220; 190
-      Line Style: Lines
-      Line Width: 0.03
+      Color: 0; 245; 230
+      Line Style: Billboards
+      Line Width: 0.035
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.025
       Buffer Length: 1
       Topic:
         Value: /tnr/repeat_path
         Reliability Policy: Reliable
         Durability Policy: Transient Local
         Depth: 1
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Setpoint y alineacion
+      Enabled: true
+      Topic:
+        Value: /tnr/navigation_markers
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
     - Class: rviz_default_plugins/Odometry
       Name: Localización relativa
-      Enabled: true
+      Enabled: false
       Keep: 1
       Topic:
         Value: /rel_odom
@@ -108,14 +156,11 @@ Visualization Manager:
     - Class: rviz_default_plugins/Select
   Views:
     Current:
-      Class: rviz_default_plugins/Orbit
-      Distance: 5
-      Pitch: 1.2
-      Yaw: 3.14
-      Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+      Class: rviz_default_plugins/TopDownOrtho
+      Angle: 0
+      Scale: 85
+      X: 2
+      Y: 0.5
       Target Frame: <Fixed Frame>
 Window Geometry:
   Width: 1250

@@ -59,6 +59,22 @@ def interpolate(history, stamp):
     return history[-1][1].copy()
 
 
+def alignment_quality(source, target, pose=(0., 0., 0.), distance=.25):
+    """Residual scan→referencia y solapamiento; no es error de pose/ground truth."""
+    if len(source) < 20 or len(target) < 20:
+        return dict(rmse_m=None, p95_m=None, overlap=0.)
+    import open3d as o3d
+    clouds = []
+    for points in (transform_points(source, pose), np.asarray(target)):
+        cloud = o3d.geometry.PointCloud()
+        cloud.points = o3d.utility.Vector3dVector(np.asarray(points, dtype=float))
+        clouds.append(cloud)
+    distances = np.asarray(clouds[0].compute_point_cloud_distance(clouds[1]))
+    valid = np.isfinite(distances) & (distances <= distance)
+    return dict(rmse_m=float(np.sqrt(np.mean(distances[valid]**2))) if valid.any() else None,
+                p95_m=float(np.percentile(distances, 95)), overlap=float(np.mean(valid)))
+
+
 class ICP:
     """Point-to-point Open3D, nubes z=0 y proyección explícita a SE(2)."""
     def __init__(self, distance=0.25, fitness=0.55, rmse=0.10):

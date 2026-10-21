@@ -9,6 +9,7 @@ from rclpy.signals import SignalHandlerOptions
 from geometry_msgs.msg import PoseStamped, Twist, TwistStamped
 from .core import polar_command
 from .localization import ns, yaw
+from .runtime import spin_until_stopped
 
 
 class Controller(Node):
@@ -64,7 +65,7 @@ def main(args=None):
     rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
     node = Controller()
     try:
-        rclpy.spin(node)
+        spin_until_stopped(node)
     except KeyboardInterrupt:
         pass
     finally:
