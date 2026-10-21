@@ -1,6 +1,6 @@
 # Advance-Robotics-tp1 — Sistema Teach & Repeat
 
-Trabajo Práctico 1 de Robótica Avanzada (Grupo 2): Diseño e implementación de un sistema de navegación autónoma **Teach and Repeat (T&R)** en ROS 2 Jazzy para un robot móvil diferencial (TurtleBot3 Burger) utilizando odometría de encoders, LiDAR 2D (ICP) y fusión mixta.
+Trabajo Práctico 1 de Robótica Avanzada (Grupo 4): Diseño e implementación de un sistema de navegación autónoma **Teach and Repeat (T&R)** en ROS 2 Jazzy para un robot móvil diferencial (TurtleBot3 Burger) utilizando odometría de encoders, LiDAR 2D (ICP) y fusión mixta.
 
 ## Estructura del Repositorio
 
@@ -11,7 +11,7 @@ Advance-Robotics-tp1/
 ├── pixi-activate.sh        # Script de activación de variables ROS 2 / Gazebo
 └── ros_ws/                 # Workspace de ROS 2
     └── src/
-        └── Grupo2/         # Paquetes desarrollados por el equipo
+        └── Grupo4/         # Paquetes desarrollados por el equipo
 ```
 
 ## Comandos Rápidos (con Pixi)
