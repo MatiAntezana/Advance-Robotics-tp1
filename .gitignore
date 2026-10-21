@@ -1,0 +1,24 @@
+# Entornos virtuales y dependencias locales
+.pixi
+.pixi/
+ros_ws/.pixi
+ros_ws/.pixi/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Carpetas de compilación y logs de ROS 2
+build/
+install/
+log/
+.pytest_cache/
+ros_ws/build/
+ros_ws/install/
+ros_ws/log/
+ros_ws/.pytest_cache/
+
+# Archivos de sistema y editores
+.DS_Store
+*.log
+.vscode/
+.idea/

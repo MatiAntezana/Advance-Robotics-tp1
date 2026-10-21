@@ -1,0 +1,35 @@
+[workspace]
+name = "Advance-Robotics-tp1"
+channels = [
+  "https://prefix.dev/robostack-jazzy",
+  "https://prefix.dev/conda-forge",
+]
+platforms = ["osx-arm64"]
+
+[dependencies]
+ros-jazzy-desktop = "*"
+ros-jazzy-ros-gz-sim = "*"
+ros-jazzy-ros-gz-bridge = "*"
+ros-jazzy-ros-gz-image = "*"
+ros-jazzy-turtlebot3-msgs = "*"
+ros-jazzy-turtlebot3-teleop = "*"
+ros-dev-tools = "*"
+colcon-common-extensions = "*"
+cmake = "*"
+ninja = "*"
+pkg-config = "*"
+ros-jazzy-tf-transformations = ">=1.1.1,<2"
+open3d = ">=0.19.0,<0.20"
+ros-jazzy-joy = ">=3.3.0,<4"
+ros-jazzy-teleop-twist-joy = ">=2.6.5,<3"
+
+[activation]
+scripts = ["pixi-activate.sh"]
+
+[tasks]
+build = "bash -c 'cd ros_ws && colcon build'"
+sim = "bash -c 'export TURTLEBOT3_MODEL=burger && ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py'"
+teleop = "bash -c 'export TURTLEBOT3_MODEL=burger && ros2 run turtlebot3_teleop teleop_keyboard'"
+teach = "bash -c 'cd ros_ws && source install/setup.bash && ros2 launch tp1_teach_repeat teach.launch.py'"
+repeat = "bash -c 'cd ros_ws && source install/setup.bash && ros2 launch tp1_teach_repeat repeat.launch.py'"
+rviz = "bash -c 'cd ros_ws && source install/setup.bash && rviz2 -d install/tp1_teach_repeat/share/tp1_teach_repeat/config/tp1_view.rviz --ros-args -p use_sim_time:=true'"
