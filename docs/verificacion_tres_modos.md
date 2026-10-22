@@ -105,7 +105,10 @@ se utiliza para guardar y mostrar el mapa, sin corregir la pose.
 | LiDAR | `mode:=lidar` | `routes/prueba_lidar.json` |
 | Mixto | `mode:=mixed` | `routes/prueba_mixed.json` |
 
-Cambiar ambos comandos, Teach y Repeat, para usar el mismo modo y archivo.
+Para evaluar Teach y Repeat de cada modo, cambiar el modo en ambos comandos.
+Para comparar solo Repeat, se puede reutilizar una misma ruta y cambiar únicamente
+`mode`: debe tener al menos dos keyframes y, para LiDAR/mixto, al menos 20 puntos
+por keyframe. Mantener el mismo archivo y volver al inicio antes de cada prueba.
 No hace falta reiniciar Gazebo ni reiniciar su reloj.
 
 ## Qué demuestra cada prueba
