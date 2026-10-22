@@ -56,12 +56,25 @@ def keyframes(frames, stage, index, done, stamp, label_stride=3):
     return result
 
 
-def navigation(pose, goal, goal_index, done, stamp, quality=None):
+def navigation(pose, goal, goal_index, done, stamp, quality=None,
+               mode=None, stage='repeat', mode_position=None):
     result = MarkerArray()
     clear = Marker()
     clear.header.frame_id, clear.header.stamp = 'odom', stamp
     clear.action = Marker.DELETEALL
     result.markers.append(clear)
+    if mode is not None:
+        label, color = {
+            'encoders': ('ENCODERS', (.35, .70, 1., 1.)),
+            'lidar': ('LIDAR', (.80, .55, 1., 1.)),
+            'mixed': ('MIXTO', (.25, 1., .65, 1.)),
+        }[mode]
+        # Posición fija junto al recorrido: no se mezcla con las metas móviles.
+        text = marker('localization_mode', 0, Marker.TEXT_VIEW_FACING, stamp,
+                      mode_position if mode_position is not None else pose, color)
+        text.pose.position.z, text.scale.z = .45, .18
+        text.text = label
+        result.markers.append(text)
     if goal is not None:
         arrow = marker('setpoint', 0, Marker.ARROW, stamp, goal, TARGET)
         arrow.pose.position.z = .08
@@ -89,9 +102,9 @@ def navigation(pose, goal, goal_index, done, stamp, quality=None):
         text.pose.position.y -= .15
         text.pose.position.z, text.scale.z = .38, .105
         residual = '--' if quality['rmse_m'] is None else f"{100*quality['rmse_m']:.1f}cm"
-        text.text = f"ICP:{residual}\nOverlap:{100*quality['overlap']:.0f}%"
+        text.text = f"RMSE mapa:{residual}\nOverlap:{100*quality['overlap']:.0f}%"
         if quality.get('stale'):
-            text.text = 'ICP:--\nSIN_SCAN'
+            text.text = 'RMSE mapa:--\nSIN_SCAN'
         result.markers.append(text)
     return result
 

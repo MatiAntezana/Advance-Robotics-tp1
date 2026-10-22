@@ -55,8 +55,8 @@ No ejecutar teleoperación y Repeat simultáneamente sobre `/cmd_vel`.
 Teach publica `/rel_odom` y guarda un keyframe al superar **0.20 m o 0.25 rad**
 respecto al último. Cada keyframe almacena pose, transformación al anterior,
 timestamp, escaneo crudo (rangos no finitos como `null`) y nube en su marco base.
-El mapa de referencia es esta secuencia de escaneos y poses; se visualiza como nube
-de puntos, no como grilla de ocupación. También se guarda la trayectoria Teach.
+El mapa de referencia es esta secuencia de escaneos y poses; RViz muestra una
+grilla derivada y conserva la nube original como diagnóstico. También se guarda la trayectoria Teach.
 
 Para conservar el punto final, detener el robot y ejecutar:
 
@@ -187,14 +187,24 @@ usan QoS Transient Local para poder conectar RViz después.
   etiqueta de destino. Display `Setpoint y alineacion`, tópico
   `/tnr/navigation_markers`. Se actualiza hasta 10 Hz y elimina marcadores de la
   etapa anterior al cambiar de ruta o de etapa.
-- El texto compacto `ICP` muestra el RMSE de distancias al punto más cercano de la
+- El mismo display muestra un cartel con solo el nombre del modo activo del nodo:
+  `ENCODERS` en azul (solo ruedas), `LIDAR` en violeta (LiDAR/ICP) y `MIXTO`
+  en verde (ruedas + LiDAR/ICP). Se ubica junto al recorrido y permite identificar
+  el método en las grabaciones aunque ambos sigan prácticamente la misma ruta.
+- El texto compacto `RMSE mapa` muestra el RMSE de distancias al punto más cercano de la
   referencia y el porcentaje de puntos dentro de `icp_distance`. Verde indica
   residual <= 6 cm y solapamiento >= 55%; naranja alerta o indica falta de scans
-  recientes. Esto evalúa consistencia de nubes, **no error real de posición**.
+  recientes. Esto evalúa consistencia de nubes, **no error real de posición** ni
+  implica que se ejecute ICP: también se muestra en modo `encoders`, donde el
+  escaneo sirve para el mapa y el diagnóstico, pero no modifica la pose.
   `/tnr/alignment` publica los valores, el timestamp del scan y el tipo de referencia
   como JSON en `std_msgs/String`. P95 incluye también puntos fuera del umbral.
 - TF y la flecha de odometría relativa quedan disponibles como displays opcionales,
   inicialmente apagados para evitar superponer ejes y flechas sobre el recorrido.
+  Para mostrar el árbol TF ya activado en una vista separada, ejecutar
+  `pixi run --frozen rviz-tf` (tras compilar). Esta vista conserva la configuración
+  del mapa y las trayectorias; cerrar antes otra instancia de RViz si el equipo
+  no puede renderizar ambas con fluidez.
 - `LiDAR localizado` muestra `/tnr/localized_scan` en `odom`, transformado con la
   estimación real al timestamp del escaneo. En mixto, la TF histórica de ese
   instante puede contener la predicción anterior a la llegada del ICP; usar esa

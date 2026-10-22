@@ -1,0 +1,98 @@
+[
+  {
+    "mode": "encoders",
+    "keyframes": 6,
+    "completed": true,
+    "final_position_error_m": 0.034331965853780885,
+    "final_yaw_error_rad": 0.0023728285681002825,
+    "stopped_at_end": true,
+    "tf_parents": {
+      "wheel_left_link": [
+        "base_link"
+      ],
+      "wheel_right_link": [
+        "base_link"
+      ],
+      "reference": [
+        "odom"
+      ],
+      "base_link": [
+        "reference"
+      ],
+      "map_current_keyframe": [
+        "base_link"
+      ],
+      "map_next_keyframe": [
+        "map_current_keyframe"
+      ],
+      "setpoint": [
+        "base_link"
+      ]
+    },
+    "tf_regressions": []
+  },
+  {
+    "mode": "lidar",
+    "keyframes": 6,
+    "completed": true,
+    "final_position_error_m": 0.030438551285048014,
+    "final_yaw_error_rad": 0.054530317822700014,
+    "stopped_at_end": true,
+    "tf_parents": {
+      "wheel_left_link": [
+        "base_link"
+      ],
+      "wheel_right_link": [
+        "base_link"
+      ],
+      "reference": [
+        "odom"
+      ],
+      "base_link": [
+        "reference"
+      ],
+      "map_current_keyframe": [
+        "base_link"
+      ],
+      "map_next_keyframe": [
+        "map_current_keyframe"
+      ],
+      "setpoint": [
+        "base_link"
+      ]
+    },
+    "tf_regressions": []
+  },
+  {
+    "mode": "mixed",
+    "keyframes": 6,
+    "completed": true,
+    "final_position_error_m": 0.030940247356357725,
+    "final_yaw_error_rad": 0.05795828495884914,
+    "stopped_at_end": true,
+    "tf_parents": {
+      "wheel_left_link": [
+        "base_link"
+      ],
+      "wheel_right_link": [
+        "base_link"
+      ],
+      "reference": [
+        "odom"
+      ],
+      "base_link": [
+        "reference"
+      ],
+      "map_current_keyframe": [
+        "base_link"
+      ],
+      "map_next_keyframe": [
+        "map_current_keyframe"
+      ],
+      "setpoint": [
+        "base_link"
+      ]
+    },
+    "tf_regressions": []
+  }
+]

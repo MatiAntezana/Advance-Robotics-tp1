@@ -82,6 +82,12 @@ class Localization(Node):
         if self.stage == 'repeat':
             data = load_route(self.route_file, self.mode != 'encoders')
             self.frames = data['keyframes']
+            if len(self.frames) < 2:
+                raise ValueError(
+                    f'La ruta {self.route_file} tiene un solo keyframe. '
+                    'En Teach, mover el robot al menos 0.20 m o girarlo 0.25 rad '
+                    'antes de guardar y ejecutar Repeat.'
+                )
             self.teach_trajectory = data.get('trajectory', [])
         self.index, self.done = 0, False
         self.alignment = None
@@ -327,6 +333,7 @@ class Localization(Node):
                 if target_index == len(self.frames)-1:
                     if not self.done:
                         self.get_logger().info('REPEAT COMPLETADO')
+                    self.index = target_index
                     self.done = True
                 elif not self.done:
                     self.index = target_index
@@ -385,8 +392,13 @@ class Localization(Node):
             quality['stale'] = True
         target_index = min(self.index+1, len(self.frames)-1) if self.frames else 0
         target_pose = self.frames[target_index]['pose'] if self.stage == 'repeat' else None
+        positions = np.asarray([f['pose'] for f in self.frames]) if self.frames else np.asarray([pose])
+        mode_position = ((positions[:, 0].min()+positions[:, 0].max())/2,
+                         positions[:, 1].max()+.75, 0.)
         self.pub_navigation.publish(visualization.navigation(pose, target_pose, target_index,
-                                                             self.done, stamp, quality))
+                                                             self.done, stamp, quality,
+                                                             mode=self.mode, stage=self.stage,
+                                                             mode_position=mode_position))
 
     def publish_visuals(self):
         if self.last_stamp is None or not self.frames or not rclpy.ok():

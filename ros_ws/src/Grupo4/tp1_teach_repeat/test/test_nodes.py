@@ -34,6 +34,62 @@ def joint(t, left=0., right=0.):
     return m
 
 
+@pytest.mark.parametrize('mode', ['encoders', 'lidar', 'mixed'])
+def test_sensor_sources_and_mixed_lidar_recovery(tmp_path, mode):
+    """Contradecir ruedas y scan distingue qué fuente modifica la pose."""
+    node = Localization(parameter_overrides=parameters(
+        mode=mode, teach_submap_keyframes=0, route_file=str(tmp_path/'route.json')))
+    try:
+        topics = {s.topic_name for s in node.subscriptions}
+        assert ('/joint_states' in topics) == (mode != 'lidar')
+        assert '/scan' in topics
+        assert (node.icp is None) == (mode == 'encoders')
+        node.pub_navigation.publish = Mock()
+        node.publish_navigation(node.pose, Time(sec=1))
+        markers = node.pub_navigation.publish.call_args.args[0].markers
+        mode_marker = next(m for m in markers if m.ns == 'localization_mode')
+        label = 'MIXTO' if mode == 'mixed' else mode.upper()
+        assert mode_marker.text == label
+        assert mode_marker.header.stamp.sec == 1
+        world = np.random.default_rng(42).uniform(-2., 2., (360, 3))
+        world[:, 2] = 0.
+        observed_x = {1: 0., 2: .020, 4: .080}
+        # Sustituye solo la conversión del sensor, conservando ICP real Open3D.
+        node.cloud = lambda msg: world - [observed_x[msg.header.stamp.sec], 0., 0.]
+
+        def scan(t):
+            msg = LaserScan()
+            msg.header.stamp = Time(sec=t)
+            node.on_scan(msg)
+
+        if mode != 'lidar':
+            node.on_joint(joint(1))
+        scan(1)
+        if mode != 'lidar':
+            node.on_joint(joint(2, 1., 1.))
+            assert node.pose[0] == pytest.approx(.033)
+        scan(2)
+        if mode == 'lidar':
+            assert node.pose[0] == pytest.approx(.020, abs=1e-5)
+            assert node.last_joint is None and not node.history
+        else:
+            node.on_joint(joint(3, 2., 2.))  # No hay scan: avanzar con ruedas.
+            expected = .066 if mode == 'encoders' else .053
+            assert node.pose[0] == pytest.approx(expected, abs=1e-5)
+            node.on_joint(joint(4, 3., 3.))
+        scan(4)  # Regresa LiDAR con una pose distinta de la predicción.
+        if mode == 'lidar':
+            assert node.pose[0] == pytest.approx(.080, abs=1e-5)
+        else:
+            node.on_joint(joint(5, 4., 4.))
+            expected = .132 if mode == 'encoders' else .113
+            assert node.pose[0] == pytest.approx(expected, abs=1e-5)
+            if mode == 'encoders':
+                np.testing.assert_allclose(node.correction, 0.)
+    finally:
+        node.destroy_node()
+
+
 def test_mixed_late_extrinsic_fills_first_keyframe(tmp_path):
     node = Localization(parameter_overrides=parameters(
         mode='mixed', route_file=str(tmp_path/'route.json')))
@@ -83,8 +139,24 @@ def test_repeat_tf_composition_and_measurement_stamp(tmp_path):
         np.testing.assert_allclose(compose(pose, tf['setpoint']), frames[1]['pose'], atol=1e-12)
         node.publish(pose, Time(sec=9), (0., 0.))
         assert node.broadcaster.sendTransform.call_count == 1
+        node.publish(np.array(frames[1]['pose']), Time(sec=11), (0., 0.))
+        assert node.done and node.index == 1
+        completed = {t.child_frame_id: t for t in node.broadcaster.sendTransform.call_args.args[0]}
+        assert completed['reference'].transform.translation.x == pytest.approx(1.)
+        assert completed['reference'].transform.translation.y == pytest.approx(.5)
+        assert completed['map_next_keyframe'].transform.translation.x == pytest.approx(0.)
+        assert completed['map_next_keyframe'].transform.translation.y == pytest.approx(0.)
     finally:
         node.destroy_node()
+
+
+def test_repeat_rejects_route_without_movement(tmp_path):
+    from tp1_teach_repeat.core import save_route
+    path = tmp_path/'route.json'
+    save_route(path, [dict(pose=[0., 0., 0.], points=[])], 'encoders', [])
+    with pytest.raises(ValueError, match='un solo keyframe'):
+        Localization(parameter_overrides=parameters(
+            mode='encoders', stage='repeat', route_file=str(path)))
 
 
 def test_publish_rate_keeps_all_encoder_motion(tmp_path):

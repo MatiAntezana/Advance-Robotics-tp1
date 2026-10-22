@@ -23,7 +23,7 @@ def test_setpoint_line_is_robot_to_target_in_odom_and_stale_quality():
     line = next(m for m in markers if m.type == Marker.LINE_STRIP)
     assert [(p.x, p.y) for p in line.points] == [(1., 2.), (3., 4.)]
     assert all(m.header.frame_id == 'odom' and m.header.stamp.sec == 7 for m in markers)
-    assert any(m.text == 'ICP:--\nSIN_SCAN' for m in markers)
+    assert any(m.text == 'RMSE mapa:--\nSIN_SCAN' for m in markers)
 
 
 def test_alignment_quality_reports_disagreement_without_moving_data():
